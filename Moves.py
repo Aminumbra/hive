@@ -42,9 +42,10 @@ def slip_moves(board, i, j):
 
     for (x, y) in free_adjacent_us:
 
-        adjacent_to_both = board.free_adjacent_cells(x, y)
+        adjacent_to_nghb = board.free_adjacent_cells(x, y)
+        if adjacent_to_nghb.intersection(free_adjacent_us):
 
-        moves.add((x, y))
+            moves.add((x, y))
 
     return moves
 
@@ -126,6 +127,8 @@ def moves_beetle(board, i, j):
 
     moves = set()
 
+    potential_moves = set()
+    
     us = board.piece_on(i, j)
     assert(isinstance(us, Pieces.Beetle))
 
@@ -232,3 +235,27 @@ def moves_ant(board, i, j):
 
     us= board.piece_on(i, j)
     assert(isinstance(us, Pieces.Ant))
+
+
+
+# General function :
+
+def moves_piece(board, i, j):
+
+    p = board.piece_on(i, j)
+
+    if isinstance(p, Pieces.Queen):
+        return moves_queen(board, i, j)
+
+    if isinstance(p, Pieces.Spider):
+        return moves_spider(board, i, j)
+
+    if isinstance(p, Pieces.Beetle):
+        return moves_beetle(board, i, j)
+
+    if isinstance(p, Pieces.Grasshopper):
+        return moves_grasshopper(board, i, j)
+
+    if isinstance(p, Pieces.Ant):
+        return moves_ant(board, i, j)
+    

@@ -49,6 +49,7 @@ class Board():
 
         # Some rules need to now the current move
         self.moves    = 1
+        self.player   = 0
 
         # Some rules need to know which Queens are already on the board
         self.white_queen = False
