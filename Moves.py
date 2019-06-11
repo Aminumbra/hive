@@ -38,14 +38,19 @@ def slip_moves(board, i, j):
 
     us = board.piece_on(i, j)
 
-    free_adjacent_us = board.free_adjacent_cells(i, j)
-
+    free_adjacent_us     = board.free_adjacent_cells(i, j) #Free cells, potential moves
+    occupied_adjacent_us = board.occupied_adjacent_cells(i, j)
+    
     for (x, y) in free_adjacent_us:
 
-        adjacent_to_nghb = board.free_adjacent_cells(x, y)
-        if adjacent_to_nghb.intersection(free_adjacent_us):
+        free_adjacent_to_nghb = board.free_adjacent_cells(x, y)
 
-            moves.add((x, y))
+        if free_adjacent_to_nghb.intersection(free_adjacent_us): # Wide enough gap to 'slip out'
+            occupied_adjacent_nghb = board.occupied_adjacent_cells(x, y)
+
+            if occupied_adjacent_us.intersection(occupied_adjacent_nghb): # Stay in contact with the hive at any point
+            
+                moves.add((x, y))
 
     return moves
 
@@ -60,7 +65,6 @@ def is_connected(board):
     reachable.add(start)
     
     done = False
-    step = 0
     
     while not done:
         done = True
@@ -69,15 +73,13 @@ def is_connected(board):
         
         for cell in reachable:
 
-            occupied_adj = board.occupied_adjactent_cells(cell[0], cell[1])
+            occupied_adj = board.occupied_adjacent_cells(cell[0], cell[1])
 
             for x, y in occupied_adj:
                 copy_reachable.add((x, y))
 
         done = (reachable == copy_reachable)
 
-        step += 1
-        
         reachable = reachable.union(copy_reachable)
 
     return (len(reachable) == len(all_cells) + 1)  #+1 as we popped the start cell at the beginning !
@@ -196,7 +198,12 @@ def moves_spider(board, i, j):
 
             x, y = path[-1]
 
+            play_move(board, (i, j), (x, y))
+            
             potential_next_pos = slip_moves(board, x, y)
+
+            play_move(board, (x, y), (i, j))
+
             next_pos = set()
 
             # Check that the next pos are actually legal moves
@@ -236,6 +243,41 @@ def moves_ant(board, i, j):
     us= board.piece_on(i, j)
     assert(isinstance(us, Pieces.Ant))
 
+    moves     = set()
+    new_moves = set()
+    
+    moves.add((i, j))
+    new_moves.add((i, j))
+    
+    done = False
+    
+    while not done:
+
+        prev_len = len(moves)
+        new_moves = set()
+        
+        for cell in moves:
+
+            pot_new_moves = slip_moves(board, cell[0], cell[1])
+
+            for x, y in pot_new_moves:
+                
+                play_move(board, (i, j), (x, y))
+                
+                if is_connected(board):
+                    new_moves.add((x, y))
+                    
+                play_move(board, (x, y), (i, j))
+
+        moves = moves.union(new_moves)
+        new_len = len(moves)
+
+        done = (prev_len == new_len)
+
+    moves.remove((i, j))
+        
+    return moves
+    
 
 
 # General function :
@@ -258,4 +300,43 @@ def moves_piece(board, i, j):
 
     if isinstance(p, Pieces.Ant):
         return moves_ant(board, i, j)
+
     
+
+def place_piece(board, i, j, piece):
+    """
+    Returns True and updates the board 'board' if placing
+    the piece 'piece' on the cell (i, j) was legal.
+    Returns False and doesn't modify the board otherwise.
+    """
+
+    col = piece.colour
+
+    assert(col == board.player)
+    
+    if board.piece_on(i, j):
+        return False
+
+    board.board[i][j].append(Pieces.Queen())
+    connected = is_connected(board)
+    board.board[i][j].pop()
+    
+    if not connected:
+        return False
+
+    if board.movecount > 1:
+
+        occupied_nghb = board.occupied_adjacent_cells(i, j)
+
+        for x, y in occupied_nghb:
+            p = board.piece_on(x, y)
+            if p.colour != col:
+                return False
+
+    if board.movecount == 4:
+        if (colour == 0 and not board.white_queen) or (colour == 1 and not black_queen):
+            return False
+    
+    board.board[i][j].append(piece)
+
+    return True

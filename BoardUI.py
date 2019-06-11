@@ -36,7 +36,7 @@ class Cell(pygame.sprite.Sprite):
             self.draw_cell(radius, radius, radius=radius, line_colour = WHITE, fill=False)
 
 
-    def draw_cell(self, x, y, radius=26, line_colour=BLACK, fill=True, fill_colour=[LIGHT_BLUE, LIGHT_YELLOW], player_colour=0):
+    def draw_cell(self, x, y, radius=26, line_colour=BLACK, fill=True, fill_colour=[LIGHT_YELLOW, LIGHT_BLUE], player_colour=0):
 
         # Adds an hexagonal surface, centered on (x, y), of colour 'colour',
         # and of radius 'radius', on the main window.
@@ -118,6 +118,9 @@ class BoardUI():
 
                         if to_cell in moves:
                             Moves.play_move(self.board, from_cell, to_cell)
+                            
+                            if self.board.player == 1:
+                                    self.board.movecount += 1
                             self.board.player = 1 - self.board.player
 
                         self.selected_cell = None
@@ -141,7 +144,7 @@ class BoardUI():
                                     self.render_moves(moves)
 
 
-                elif event.type == pygame.MOUSEBUTTONUP and event.button == 3: # Add a piece !
+                elif event.type == pygame.MOUSEBUTTONUP and event.button == 3: # Add a piece
 
                     x, y = self.screen_to_coord(event.pos[0], event.pos[1], ratio=27)
                     colour = self.board.player
@@ -169,19 +172,28 @@ class BoardUI():
                         
                         if piece:
 
-                            self.board.board[x][y].append(piece)
-                            
-                            cell = Cell(radius=26, piece=piece)
-                            cell.board_x = x
-                            cell.board_y = y
-                    
-                            self.cell_list.add(cell)
-                    
-                            new_y, new_x = self.coord_to_screen(x, y, ratio=27)
-                            cell.rect.center = (new_y, new_x)
-                            cell.draw(self.screen)
+                            if Moves.place_piece(self.board, x, y, piece):
 
-                            self.board.player = 1 - self.board.player
+                                if isinstance(piece, Pieces.Queen):
+                                    if colour == 0:
+                                        self.board.white_queen = True
+                                    else:
+                                        self.board.black_queen = True
+                                        
+                                cell = Cell(radius=26, piece=piece)
+                                cell.board_x = x
+                                cell.board_y = y
+                    
+                                self.cell_list.add(cell)
+                    
+                                new_y, new_x = self.coord_to_screen(x, y, ratio=27)
+                                cell.rect.center = (new_y, new_x)
+                                cell.draw(self.screen)
+
+                                if self.board.player == 1:
+                                    self.board.movecount += 1
+                                self.board.player = 1 - self.board.player
+                                
 
                         self.render()
 
@@ -235,7 +247,7 @@ class BoardUI():
                     
 
 
-    def draw_hexagon_(self, x, y, radius=26, line_colour=BLACK, fill=True, fill_colour=[LIGHT_BLUE, LIGHT_YELLOW], player_colour=0):
+    def draw_hexagon_(self, x, y, radius=26, line_colour=BLACK, fill=True, fill_colour=[LIGHT_YELLOW, LIGHT_BLUE], player_colour=0):
 
         # Adds an hexagonal surface, centered on (x, y), of colour 'colour',
         # and of radius 'radius', on the main window.
@@ -329,10 +341,15 @@ class BoardUI():
                     cell.draw(self.screen)
 
 
-        player_colour_str  = "Player : " + str(self.board.player + 1)
+        player_colour_str  = "Player " + str(self.board.player + 1)
         player_colour      = self.menu_font.render(player_colour_str, True, WHITE)
-        player_colour_rect = player_colour.get_rect(topleft=(100, 100 ))
+        player_colour_rect = player_colour.get_rect(topleft=(100, 100))
         self.screen.blit(player_colour, player_colour_rect)
+
+        movecount_str      = "Move number " + str(self.board.movecount)
+        movecount          = self.menu_font.render(movecount_str, True, WHITE)
+        movecount_rect     = movecount.get_rect(topleft=(100, 150))
+        self.screen.blit(movecount, movecount_rect)
         
         self.update()
 

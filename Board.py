@@ -31,25 +31,25 @@ class Board():
         ## We pre-allocate a large empty board instead of dealing with
         ## a data structure of variable size
         
-        self.__width  = 51
-        self.__height = 51
+        self.__width   = 51
+        self.__height  = 51
 
         # With the Beetle mechanic, each position can be occupied by several pieces
         # Therefore, we use lists to represent the pieces at each cell
-        self.board    = [[[] for i in range(self.__width)] for j in range(self.__height)]
-        self.center   = (26, 26)
+        self.board     = [[[] for i in range(self.__width)] for j in range(self.__height)]
+        self.center    = (26, 26)
 
         # To visualize or compute things, it might be useful to remember
         # where are the rightmost, leftmost ... pieces on the board.
         # TODO : actually use it
-        self.left     = 0
-        self.right    = 51
-        self.top      = 0
-        self.bot      = 51
+        self.left      = 0
+        self.right     = 51
+        self.top       = 0
+        self.bot       = 51
 
         # Some rules need to now the current move
-        self.moves    = 1
-        self.player   = 0
+        self.movecount = 1
+        self.player    = 0
 
         # Some rules need to know which Queens are already on the board
         self.white_queen = False
@@ -167,7 +167,7 @@ class Board():
         return cells
 
 
-    def occupied_adjactent_cells(self, i, j):
+    def occupied_adjacent_cells(self, i, j):
 
         cells = set()
 
@@ -182,6 +182,7 @@ class Board():
         return cells
 
 
+    
     def spawn_cells_for_colour(self, colour):
         """
         Returns a set of all the cells where a given player can
