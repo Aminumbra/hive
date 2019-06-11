@@ -10,11 +10,49 @@ BROWN        = [153, 76, 30]
 
 
 class Cell(pygame.sprite.Sprite):
-    def __init__(self, radius=26, piece=None, colour=0):
+    def __init__(self, radius=26, piece=None):
         super().__init__()
 
         self.image = pygame.Surface([2 * radius, 2 * radius])
         self.image.fill(BROWN)
+        self.rect = self.image.get_rect()
+        self.font = pygame.font.SysFont('Comic Sans MS', 12)
+        self.image.set_colorkey(BROWN)
+
+        if piece:
+            self.draw_cell(radius, radius, radius=radius, player_colour=piece.colour)
+            letter = self.font.render(piece.symbol, True, (0,0,0))
+            letter_rect = letter.get_rect(center=(radius, radius))
+            self.image.blit(letter, letter_rect)
+
+        else:
+            self.draw_cell(radius, radius, radius=radius, line_colour = WHITE, fill=False)
+
+
+    def draw_cell(self, x, y, radius=26, line_colour=BLACK, fill=True, fill_colour=[LIGHT_BLUE, LIGHT_YELLOW], player_colour=0):
+
+        # Adds an hexagonal surface, centered on (x, y), of colour 'colour',
+        # and of radius 'radius', on the main window.
+        # Need to get the coordinates of the 6 points : trigonometry !
+
+        points = []
+
+        new_x, new_y = x, y
+
+        for i in range(6):
+            new_x = x + radius * math.cos(2 * math.pi * i / 6)
+            new_y = y + radius * math.sin(2 * math.pi * i / 6)
+
+            points.append([new_x, new_y])
+
+        pygame.draw.polygon(self.image, line_colour, points, 3)
+
+        if fill:
+            pygame.draw.polygon(self.image, fill_colour[player_colour], points, 0)
+
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
 
         
 
@@ -28,11 +66,15 @@ class BoardUI():
         self.screen   = pygame.display.set_mode([1400, 1000], pygame.RESIZABLE)
         self.font     = None
         self.offset   = [0, 0]
+
+        self.cell_list = pygame.sprite.Group()
         
         self.start_renderer()
             
     def start_renderer(self):
         pygame.font.init()
+        pygame.init()
+
         self.font = pygame.font.SysFont('Comic Sans MS', 12)
         
         pygame.display.set_caption("Hive game")
@@ -110,6 +152,19 @@ class BoardUI():
         self.screen.blit(letter, letter_rect)
 
 
+    def get_cells_sprite(self, radius=26):
+
+        for x in range(self.board.top, self.board.bot):
+            for y in range(self.board.left, self.board.right):
+
+                p = self.board.piece_on(x, y)
+
+                if p:
+                    cell = Cell(radius=radius, piece=p)
+                    self.cell_list.add(cell)
+                    
+        
+        
     def render_moves(self, moves, radius=26, offset = [0, 0], line_colour=WHITE):
 
         ratio = radius + 1
@@ -132,8 +187,11 @@ class BoardUI():
                 p = self.board.piece_on(x, y)
 
                 if p:
-                    self.draw_piece(p, x, y, radius)
-                    
+                    cell = Cell(radius, p)
+                    new_y, new_x = self.coord_to_screen(x, y, ratio=radius+1, offset=offset)
+                    cell.rect.x = new_y
+                    cell.rect.y = new_x
+                    cell.draw(self.screen)                    
 
         self.update()
 
