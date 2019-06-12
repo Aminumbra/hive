@@ -15,6 +15,11 @@ b.board[11][11].append(Pieces.Spider(1))
 b.board[12][11].append(Pieces.Beetle(0))
 b.board[10][12].append(Pieces.Grasshopper(0))
 b.board[11][12].append(Pieces.Grasshopper(1))
+b.board[11][13].append(Pieces.Queen(0))
+
+b.white_queen = True
+b.black_queen = True
+b.movecount   = 6
 
 ui.render()
 ui.manage_events()

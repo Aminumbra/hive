@@ -253,10 +253,12 @@ def moves_ant(board, i, j):
     
     while not done:
 
+        moves_added_last_step = new_moves.copy()
+        
         prev_len = len(moves)
         new_moves = set()
         
-        for cell in moves:
+        for cell in moves_added_last_step:
 
             pot_new_moves = slip_moves(board, cell[0], cell[1])
 
