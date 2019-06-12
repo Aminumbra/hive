@@ -12,7 +12,7 @@ BROWN        = [153, 76, 30]
 
 
 class Cell(pygame.sprite.Sprite):
-    def __init__(self, radius=26, piece=None):
+    def __init__(self, radius=26, font=None, piece=None):
         super().__init__()
 
         self.piece = piece
@@ -25,7 +25,7 @@ class Cell(pygame.sprite.Sprite):
         self.radius = radius
         
         self.rect  = self.image.get_rect()
-        self.font  = pygame.font.SysFont('Comic Sans MS', 12)
+        self.font  = font
         self.image.set_colorkey(BROWN)
 
         if piece:
@@ -87,7 +87,7 @@ class BoardUI():
 
     ################
 
-    # Technical functions
+    # Technical functions to manage the events
         
     def start_renderer(self):
         pygame.font.init()
@@ -103,7 +103,7 @@ class BoardUI():
         self.update()
 
 
-    def manage_events(self):
+    def manage_all_events(self):
 
         while True:
 
@@ -115,91 +115,105 @@ class BoardUI():
                 elif event.type == pygame.MOUSEBUTTONUP and event.button == 1: # Select or move a piece
 
                     if self.selected_cell:
-                        x, y      = event.pos
-                        to_cell   = self.screen_to_coord(x, y)
-                        from_cell = (self.selected_cell.board_x, self.selected_cell.board_y)
-
-                        moves = Moves.moves_piece(self.board, from_cell[0], from_cell[1])
-
-                        if to_cell in moves:
-                            Moves.play_move(self.board, from_cell, to_cell)
-                            
-                            if self.board.player == 1:
-                                    self.board.movecount += 1
-                            self.board.player = 1 - self.board.player
-
-                        self.selected_cell = None
-                            
-                        self.render()
-
+                        
+                        self.move_piece_event(event)
                         
                     else:
-                        for cell in self.cell_list:
-                        
-                            if cell.rect.collidepoint(event.pos):
-                            
-                                x, y = cell.board_x, cell.board_y
-
-                                piece = self.board.piece_on(x, y)
-
-                                if piece.colour == self.board.player:
-                                    self.selected_cell = cell
-                                    moves = Moves.moves_piece(self.board, x, y)
-                                
-                                    self.render_moves(moves)
+                        self.select_piece_event(event)
 
 
                 elif event.type == pygame.MOUSEBUTTONUP and event.button == 3: # Add a piece
 
-                    x, y = self.screen_to_coord(event.pos[0], event.pos[1])
-                    colour = self.board.player
+                    self.place_piece_event(event)
                     
-                    new_event = pygame.event.wait()
+                    
 
-                    if new_event.type == pygame.KEYDOWN:
-                        key   = new_event.key
-                        piece = None
+    def move_piece_event(self, event):
+        x, y      = event.pos
+        to_cell   = self.screen_to_coord(x, y)
+        from_cell = (self.selected_cell.board_x, self.selected_cell.board_y)
 
-                        if key == ord("a"):
-                            piece = Pieces.Ant(colour)
+        Moves.play_legal_move(self.board, from_cell, to_cell)
+        
+        self.selected_cell = None
+        self.render()
+        
 
-                        elif key == ord("q"):
-                            piece = Pieces.Queen(colour)
-
-                        elif key == ord("b"):
-                            piece = Pieces.Beetle(colour)
-
-                        elif key == ord("g"):
-                            piece = Pieces.Grasshopper(colour)
-
-                        elif key == ord("s"):
-                            piece = Pieces.Spider(colour)
-
-                        else:
-                            continue
-                        
-                        if piece:
-
-                            if Moves.place_piece(self.board, x, y, piece):
-
-                                if isinstance(piece, Pieces.Queen):
-                                    if colour == 0:
-                                        self.board.white_queen = True
-                                    else:
-                                        self.board.black_queen = True
-
-                                if self.board.player == 1:
-                                    self.board.movecount += 1
-                                self.board.player = 1 - self.board.player
+    def select_piece_event(self, event):
+        for cell in self.cell_list:
+            
+            if cell.rect.collidepoint(event.pos):
                                 
+                x, y = cell.board_x, cell.board_y
 
-                        self.render()
+                piece = self.board.piece_on(x, y)
 
-                    else:
-                         continue   
+                if piece.colour == self.board.player:
+                    self.selected_cell = cell
+                    moves = Moves.moves_piece(self.board, x, y)
+                    self.render_moves(moves)
+                
+                break
+            
+
+    def place_piece_event(self, event):
+
+        x, y = self.screen_to_coord(event.pos[0], event.pos[1])
+        colour = self.board.player
                     
+        new_event = pygame.event.wait()
+
+        if new_event.type == pygame.KEYDOWN:
+            key   = new_event.key
+            piece = None
+
+            if key == ord("a"):
+                piece = Pieces.Ant(colour)
+
+            elif key == ord("q"):
+                piece = Pieces.Queen(colour)
+
+            elif key == ord("b"):
+                piece = Pieces.Beetle(colour)
+
+            elif key == ord("g"):
+                piece = Pieces.Grasshopper(colour)
+
+            elif key == ord("s"):
+                piece = Pieces.Spider(colour)
                         
+            if piece:
+                Moves.place_piece(self.board, x, y, piece)
+                self.render()
+
+
+    def wait_for_move(self):
+
+        while True:
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.display.quit()
+                    return
+                
+                elif event.type == pygame.MOUSEBUTTONUP and event.button == 1: # Select or move a piece
+
+                    if self.selected_cell:
                         
+                        self.move_piece_event(event)
+                        
+                    else:
+                        self.select_piece_event(event)
+
+                    return
+
+
+                elif event.type == pygame.MOUSEBUTTONUP and event.button == 3: # Add a piece
+
+                    self.place_piece_event(event)
+                    return
+
+                    
 
 
     ##################
@@ -299,7 +313,7 @@ class BoardUI():
                 p = self.board.piece_on(x, y)
 
                 if p:
-                    cell = Cell(radius=self.radius, piece=p)
+                    cell = Cell(radius=self.radius, font=self.font, piece=p)
                     self.cell_list.add(cell)
                     
         
@@ -333,7 +347,7 @@ class BoardUI():
                     ### TODO : implement other things so sprite are added ON CREATION, not on rendering
                     # and so they ALREADY have a correct rect.x, rect.y
                     
-                    cell = Cell(self.radius, p)
+                    cell = Cell(radius=self.radius, font=self.font, piece=p)
                     cell.board_x = x
                     cell.board_y = y
                     
@@ -354,6 +368,18 @@ class BoardUI():
         movecount_rect     = movecount.get_rect(topleft=(100, 150))
         self.screen.blit(movecount, movecount_rect)
         
+        self.update()
+
+
+    def render_endgame(self, winner):
+
+        self.render()
+
+        message_str         = "Player " + str(winner + 1) + " has won the game !"
+        message_colour      = self.menu_font.render(message_str, True, WHITE)
+        message_colour_rect = message_colour.get_rect(center=(self.screen.get_width() // 2, 50))
+        self.screen.blit(message_colour, message_colour_rect)
+
         self.update()
 
 

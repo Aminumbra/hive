@@ -22,4 +22,4 @@ b.black_queen = True
 b.movecount   = 6
 
 ui.render()
-ui.manage_events()
+ui.manage_all_events()

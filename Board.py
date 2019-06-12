@@ -20,6 +20,7 @@
 # +-----+ 2,1 +-----+ 2,3 +
 # |     |     |     |     |
 
+import Pieces
 
 class Board():
 
@@ -182,6 +183,26 @@ class Board():
         return cells
 
 
+
+    def queen_position(self, colour):
+
+        if colour == 0:
+            if not self.white_queen:
+                return None
+
+        else:
+            if not self.black_queen:
+                return None
+
+        for i in range(self.top, self.bot):
+            for j in range(self.left, self.right):
+
+                pieces = self.all_pieces_on(i, j)
+
+                for p in pieces:
+                    if isinstance(p, Pieces.Queen) and p.colour == colour:
+                        return i, j
+        
     
     def spawn_cells_for_colour(self, colour):
         """

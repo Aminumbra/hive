@@ -86,15 +86,125 @@ def is_connected(board):
 
 
 
+# General function :
 
-def play_move(board, from_cell, to_cell):
+def moves_piece(board, i, j):
+
+    p = board.piece_on(i, j)
+
+    if isinstance(p, Pieces.Queen):
+        return moves_queen(board, i, j)
+
+    if isinstance(p, Pieces.Spider):
+        return moves_spider(board, i, j)
+
+    if isinstance(p, Pieces.Beetle):
+        return moves_beetle(board, i, j)
+
+    if isinstance(p, Pieces.Grasshopper):
+        return moves_grasshopper(board, i, j)
+
+    if isinstance(p, Pieces.Ant):
+        return moves_ant(board, i, j)
+
+    
+
+def place_piece(board, i, j, piece):
+    """
+    Returns True and updates the board 'board' if placing
+    the piece 'piece' on the cell (i, j) was legal.
+    Returns False and doesn't modify the board otherwise.
+    """
+
+    colour = piece.colour
+
+    assert(colour == board.player)
+    
+    if board.piece_on(i, j):
+        return False
+
+    board.board[i][j].append(Pieces.Queen())
+    connected = is_connected(board)
+    board.board[i][j].pop()
+    
+    if not connected:
+        return False
+
+    if board.movecount > 1:
+
+        occupied_nghb = board.occupied_adjacent_cells(i, j)
+
+        for x, y in occupied_nghb:
+            p = board.piece_on(x, y)
+            if p.colour != colour:
+                return False
+
+    if board.movecount == 4:
+        if (colour == 0 and not board.white_queen) or (colour == 1 and not board.black_queen):
+            return False
+
+    # Here, we have checked that this move was indeed legal,
+    # so we put the piece on the board !
+    
+    board.board[i][j].append(piece)
+
+    if board.player == 1:
+        board.movecount += 1
+    board.player = 1 - board.player
+
+
+    if isinstance(piece, Pieces.Queen):
+        if colour == 0:
+            board.white_queen = True
+        else:
+            board.black_queen = True
+
+    return True
+
+
+
+def has_lost(board, colour):
+
+    pos = board.queen_position(colour)
+
+    if pos:
+        number_nhgb = len(board.occupied_adjacent_cells(pos[0], pos[1]))
+        return number_nhgb == 6
+
+    return False
+
+
+
+def simulate_move(board, from_cell, to_cell):
 
     i, j = from_cell
     x, y = to_cell
     
     p = board.board[i][j].pop()
     board.board[x][y].append(p)
+    
 
+
+def play_legal_move(board, from_cell, to_cell):
+    """
+    If the asked move if legal, plays it and returns True.
+    Otherwise, the board is not modified, and the function returns
+    False.
+    """
+
+    legal_moves = moves_piece(board, from_cell[0], from_cell[1])
+
+    if to_cell in legal_moves:
+
+        simulate_move(board, from_cell, to_cell)
+
+        if board.player == 1:
+            board.movecount += 1
+        board.player = 1 - board.player
+        
+        return True
+
+    return False
 
 #####################################################################
 
@@ -113,11 +223,11 @@ def moves_queen(board, i, j):
 
     for x, y in potential_moves:
 
-        play_move(board, (i, j), (x, y))
+        simulate_move(board, (i, j), (x, y))
         if is_connected(board):
             moves.add((x, y))
 
-        play_move(board, (x, y), (i, j))
+        simulate_move(board, (x, y), (i, j))
 
     return moves
 
@@ -144,11 +254,11 @@ def moves_beetle(board, i, j):
 
     for x, y in potential_moves:
 
-        play_move(board, (i, j), (x, y))
+        simulate_move(board, (i, j), (x, y))
         if is_connected(board):
             moves.add((x, y))
 
-        play_move(board, (x, y), (i, j))
+        simulate_move(board, (x, y), (i, j))
         
     return moves
 
@@ -170,11 +280,11 @@ def moves_grasshopper(board, i, j):
         while board.piece_on(x, y):
             x, y = board.adjacent_cells(x, y)[d]
 
-        play_move(board, (i, j), (x, y))
+        simulate_move(board, (i, j), (x, y))
         if is_connected(board):
             moves.add((x, y))
 
-        play_move(board, (x, y), (i, j))
+        simulate_move(board, (x, y), (i, j))
 
     return moves
 
@@ -198,11 +308,11 @@ def moves_spider(board, i, j):
 
             x, y = path[-1]
 
-            play_move(board, (i, j), (x, y))
+            simulate_move(board, (i, j), (x, y))
             
             potential_next_pos = slip_moves(board, x, y)
 
-            play_move(board, (x, y), (i, j))
+            simulate_move(board, (x, y), (i, j))
 
             next_pos = set()
 
@@ -210,12 +320,12 @@ def moves_spider(board, i, j):
 
             for a, b in potential_next_pos:
 
-                play_move(board, (i, j), (a, b))
+                simulate_move(board, (i, j), (a, b))
 
                 if is_connected(board):
                     next_pos.add((a, b))
 
-                play_move(board, (a, b), (i, j))
+                simulate_move(board, (a, b), (i, j))
 
 
             next_pos = next_pos.difference(set(path)) # We can't go back !
@@ -264,12 +374,12 @@ def moves_ant(board, i, j):
 
             for x, y in pot_new_moves:
                 
-                play_move(board, (i, j), (x, y))
+                simulate_move(board, (i, j), (x, y))
                 
                 if is_connected(board):
                     new_moves.add((x, y))
                     
-                play_move(board, (x, y), (i, j))
+                simulate_move(board, (x, y), (i, j))
 
         moves = moves.union(new_moves)
         new_len = len(moves)
@@ -279,66 +389,3 @@ def moves_ant(board, i, j):
     moves.remove((i, j))
         
     return moves
-    
-
-
-# General function :
-
-def moves_piece(board, i, j):
-
-    p = board.piece_on(i, j)
-
-    if isinstance(p, Pieces.Queen):
-        return moves_queen(board, i, j)
-
-    if isinstance(p, Pieces.Spider):
-        return moves_spider(board, i, j)
-
-    if isinstance(p, Pieces.Beetle):
-        return moves_beetle(board, i, j)
-
-    if isinstance(p, Pieces.Grasshopper):
-        return moves_grasshopper(board, i, j)
-
-    if isinstance(p, Pieces.Ant):
-        return moves_ant(board, i, j)
-
-    
-
-def place_piece(board, i, j, piece):
-    """
-    Returns True and updates the board 'board' if placing
-    the piece 'piece' on the cell (i, j) was legal.
-    Returns False and doesn't modify the board otherwise.
-    """
-
-    col = piece.colour
-
-    assert(col == board.player)
-    
-    if board.piece_on(i, j):
-        return False
-
-    board.board[i][j].append(Pieces.Queen())
-    connected = is_connected(board)
-    board.board[i][j].pop()
-    
-    if not connected:
-        return False
-
-    if board.movecount > 1:
-
-        occupied_nghb = board.occupied_adjacent_cells(i, j)
-
-        for x, y in occupied_nghb:
-            p = board.piece_on(x, y)
-            if p.colour != col:
-                return False
-
-    if board.movecount == 4:
-        if (colour == 0 and not board.white_queen) or (colour == 1 and not black_queen):
-            return False
-    
-    board.board[i][j].append(piece)
-
-    return True
