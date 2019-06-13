@@ -9,6 +9,7 @@ LIGHT_YELLOW = [255, 255, 170]
 BLACK        = [0, 0, 0]
 WHITE        = [255, 255, 255]
 BROWN        = [153, 76, 30]
+LIGHT_GREY   = [200, 200, 200]
 
 
 class Cell(pygame.sprite.Sprite):
@@ -63,7 +64,45 @@ class Cell(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
+###################################################################################################
+
+
+class Button(pygame.sprite.Sprite):
+    def __init__(self, size=(250, 40), font=None, text=None):
+        super().__init__()
+
+        self.text         = text
+        self.piece_symbol = text[0] if text else None
+        self.size         = size
+        self.image        = pygame.Surface(size)
+        self.image.fill(BROWN)
+
+        self.rect  = self.image.get_rect()
+        self.font  = font
+        self.image.set_colorkey(BROWN)
+
+        if text:
+            self.draw_button()
+            piece_name      = self.font.render(text, True, (0,0,0))
+            piece_name_rect = piece_name.get_rect(center=(size[0] // 2, size[1] // 2))
+            self.image.blit(piece_name, piece_name_rect)
+
+
+    def draw_button(self, x=1, y=1, colour=LIGHT_GREY):
+
+        # Adds a grey rectangular surface on the main window.
+
+        # Upper left coordinates
+        corner_x, corner_y = x, y
+        width, height      = self.size[0] - 2, self.size[1] - 2
         
+        pygame.draw.rect(self.image, colour, [corner_x, corner_y, width, height], 0)
+
+        
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
+
+#####################################################################################################
 
 class BoardUI():
     
@@ -410,6 +449,16 @@ class BoardUI():
                 pos_x += 30
 
             pos_y += 120
+
+
+        pos_x = 100
+        
+        for piece_name in Pieces.all_pieces_name:
+            
+            button = Button(font=self.menu_font, text=piece_name)
+            button.rect.center = (1200, pos_x)
+            button.draw(self.screen)
+            pos_x += 60
         
         self.update()
         

@@ -59,6 +59,12 @@ class Ant(Piece):
 
 
 
+all_pieces_name = {"Queen",
+                   "Beetle",
+                   "Spider",
+                   "Ant",
+                   "Grasshopper"}
+
 starting_pieces = {"Q" : 1,
                    "B" : 2,
                    "S" : 2,
