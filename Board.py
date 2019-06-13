@@ -112,12 +112,10 @@ class Board():
         Does not check for anything, such as whether it is
         legal or not place such a piece at such a cell.
         Updates self.[top|bot|left|right].
-        Updates self.remaining_pieces.
+        Does not update self.remaining_pieces.
         """
 
         self.board[i][j].append(p)
-
-        self.remaining_pieces[p.colour][p.symbol] -= 1
 
         self.top   = min(self.top,   i)
         self.bot   = max(self.bot,   i+1)

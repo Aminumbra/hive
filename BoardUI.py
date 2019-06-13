@@ -94,7 +94,7 @@ class BoardUI():
         pygame.init()
 
         self.font = pygame.font.SysFont('Comic Sans MS', 12)
-        self.menu_font = pygame.font.SysFont('Arial', 24)
+        self.menu_font = pygame.font.SysFont('Courier', 20)
         
         pygame.display.set_caption("Hive game")
 
@@ -136,7 +136,7 @@ class BoardUI():
         Moves.play_legal_move(self.board, from_cell, to_cell)
         
         self.selected_cell = None
-        self.render()
+        self.render_step()
         
 
     def select_piece_event(self, event):
@@ -150,8 +150,9 @@ class BoardUI():
 
                 if piece.colour == self.board.player:
                     self.selected_cell = cell
-                    moves = Moves.moves_piece(self.board, x, y)
-                    self.render_moves(moves)
+                    if self.board.queens[piece.colour]:
+                        moves = Moves.moves_piece(self.board, x, y)
+                        self.render_moves(moves)
                 
                 break
             
@@ -186,7 +187,7 @@ class BoardUI():
                         
             if piece:
                 Moves.place_piece(self.board, x, y, piece)
-                self.render()
+                self.render_step()
 
 
     def wait_for_move(self):
@@ -218,9 +219,9 @@ class BoardUI():
                     
 
 
-    ##################
+    ###################################
 
-    # Visualization function
+    # Useful technical functions to deal with the coordinate systems
 
     def coord_to_screen(self, x, y):
 
@@ -263,7 +264,11 @@ class BoardUI():
                 
                 if virtual_cell.rect.collidepoint(x, y):
                     return (i, j)
-                    
+
+
+    #################################
+
+    # Visualization functions
 
 
     def draw_hexagon_(self, x, y, line_colour=BLACK, fill=True, fill_colour=[LIGHT_YELLOW, LIGHT_BLUE], player_colour=0):
@@ -335,7 +340,7 @@ class BoardUI():
         
             
         
-    def render(self):
+    def render_pieces(self):
 
         self.screen.fill(BROWN)
         
@@ -359,23 +364,60 @@ class BoardUI():
                     cell.rect.center = (new_y, new_x)
                     cell.draw(self.screen)
 
+        self.update()
 
-        player_colour_str  = "Player " + str(self.board.player + 1)
+        
+
+    def render_menu(self):
+
+        player = self.board.player
+        
+        player_colour_str  = "Player " + str(player + 1)
         player_colour      = self.menu_font.render(player_colour_str, True, WHITE)
-        player_colour_rect = player_colour.get_rect(topleft=(100, 100))
+        player_colour_rect = player_colour.get_rect(topleft=(50, 100))
         self.screen.blit(player_colour, player_colour_rect)
 
         movecount_str      = "Move number " + str(self.board.movecount)
         movecount          = self.menu_font.render(movecount_str, True, WHITE)
-        movecount_rect     = movecount.get_rect(topleft=(100, 150))
+        movecount_rect     = movecount.get_rect(topleft=(50, 150))
         self.screen.blit(movecount, movecount_rect)
+
+
+        pos_x = 200
+        pos_y = 50
+
+        message_pieces      = self.menu_font.render("Pieces left:", True, WHITE)
+        message_pieces_rect = message_pieces.get_rect(topleft=(pos_y, pos_x))
+        self.screen.blit(message_pieces, message_pieces_rect)
+        
+        for p in range(2):
+            remaining_pieces = self.board.remaining_pieces[p]
+
+            pos_x = 230
+
+            message_pieces      = self.menu_font.render("Player " + str(p + 1), True, WHITE)
+            message_pieces_rect = message_pieces.get_rect(topleft=(pos_y, pos_x))
+            self.screen.blit(message_pieces, message_pieces_rect)
+
+            pos_x += 30
+            
+            for s in remaining_pieces:
+                player_pieces_str = s + " : " + str(remaining_pieces[s])
+            
+                player_pieces      = self.menu_font.render(player_pieces_str, True, WHITE)
+                player_pieces_rect = player_pieces.get_rect(topleft=(pos_y, pos_x))
+                self.screen.blit(player_pieces, player_pieces_rect)
+                pos_x += 30
+
+            pos_y += 120
         
         self.update()
-
+        
 
     def render_endgame(self, winner):
 
-        self.render()
+        self.render_pieces()
+        self.render_menu()
 
         message_str         = "Player " + str(winner + 1) + " has won the game !"
         message_colour      = self.menu_font.render(message_str, True, WHITE)
@@ -384,6 +426,11 @@ class BoardUI():
 
         self.update()
 
+
+    def render_step(self):
+
+        self.render_pieces()
+        self.render_menu()
 
     def update(self):
         pygame.display.update()

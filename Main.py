@@ -7,7 +7,7 @@ import Moves
 def start_game():
     b = Board.Board()
     ui = BoardUI.BoardUI(b)
-    ui.render()
+    ui.render_step()
 
     winner = -1
 

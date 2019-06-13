@@ -119,10 +119,14 @@ def place_piece(board, i, j, piece):
     colour = piece.colour
 
     assert(colour == board.player)
+
+    # Can't place a piece on top of another
     
     if board.piece_on(i, j):
         return False
 
+    # Can't place a piece which is not connected to the
+    # hive
     board.board[i][j].append(Pieces.Queen())
     connected = is_connected(board)
     board.board[i][j].pop()
@@ -130,6 +134,8 @@ def place_piece(board, i, j, piece):
     if not connected:
         return False
 
+    # Can't place a piece with adjacent ennemy pieces, unless
+    # it is the first move
     if board.movecount > 1:
 
         occupied_nghb = board.occupied_adjacent_cells(i, j)
@@ -138,14 +144,15 @@ def place_piece(board, i, j, piece):
             p = board.piece_on(x, y)
             if p.colour != colour:
                 return False
-    
+
+    # Must place the Queen before or at move 4
     if board.movecount == 4:
         if not board.queens[colour]:
             return False
 
 
+    # The piece must be available !
     symbol = piece.symbol
-
     if not board.remaining_pieces[colour][symbol]:
         return False
         
@@ -162,6 +169,8 @@ def place_piece(board, i, j, piece):
         
     board.add_piece(i, j, piece)
 
+    board.remaining_pieces[piece.colour][piece.symbol] -= 1
+
     if board.player == 1:
         board.movecount += 1
     board.player = 1 - board.player
@@ -176,6 +185,7 @@ def place_piece(board, i, j, piece):
 
 def has_lost(board, colour):
 
+    # We lose if our Queen is surrounded
     pos = board.queen_position(colour)
 
     if pos:
@@ -205,13 +215,19 @@ def play_legal_move(board, from_cell, to_cell):
 
     legal_moves = moves_piece(board, from_cell[0], from_cell[1])
 
+    p = board.piece_on(from_cell[0], from_cell[1])
+
+    # Last legality check : we cannot move if we have not placed
+    # our Queen on the board yet
+    if not board.queens[p.colour]:
+        return False
+
     if to_cell in legal_moves:
 
         p = board.remove_piece(from_cell[0], from_cell[1])
 
         board.add_piece(to_cell[0], to_cell[1], p)
-
-            
+        
         if board.player == 1:
             board.movecount += 1
         board.player = 1 - board.player
