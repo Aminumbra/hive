@@ -138,15 +138,29 @@ def place_piece(board, i, j, piece):
             p = board.piece_on(x, y)
             if p.colour != colour:
                 return False
-
+    
     if board.movecount == 4:
-        if (colour == 0 and not board.white_queen) or (colour == 1 and not board.black_queen):
+        if not board.queens[colour]:
             return False
+
+
+    symbol = piece.symbol
+
+    if not board.remaining_pieces[colour][symbol]:
+        return False
+        
 
     # Here, we have checked that this move was indeed legal,
     # so we put the piece on the board !
-    
-    board.board[i][j].append(piece)
+
+    # First, we check that whether this is the very first move
+    # of the game, and if it is, we set board's bounds to this
+    # cell.
+
+    if board.first_move():
+        board.set_bounds(i, j)
+        
+    board.add_piece(i, j, piece)
 
     if board.player == 1:
         board.movecount += 1
@@ -154,10 +168,7 @@ def place_piece(board, i, j, piece):
 
 
     if isinstance(piece, Pieces.Queen):
-        if colour == 0:
-            board.white_queen = True
-        else:
-            board.black_queen = True
+        board.queens[colour] = True
 
     return True
 
@@ -196,8 +207,11 @@ def play_legal_move(board, from_cell, to_cell):
 
     if to_cell in legal_moves:
 
-        simulate_move(board, from_cell, to_cell)
+        p = board.remove_piece(from_cell[0], from_cell[1])
 
+        board.add_piece(to_cell[0], to_cell[1], p)
+
+            
         if board.player == 1:
             board.movecount += 1
         board.player = 1 - board.player

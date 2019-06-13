@@ -59,14 +59,8 @@ class Ant(Piece):
 
 
 
-starting_pieces = {Queen(),
-                   Spider(),
-                   Spider(),
-                   Beetle(),
-                   Beetle(),
-                   Grasshopper(),
-                   Grasshopper(),
-                   Grasshopper(),
-                   Ant(),
-                   Ant(),
-                   Ant()}
+starting_pieces = {"Q" : 1,
+                   "B" : 2,
+                   "S" : 2,
+                   "A" : 3,
+                   "G" : 3}

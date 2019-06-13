@@ -158,7 +158,9 @@ class BoardUI():
 
     def place_piece_event(self, event):
 
-        x, y = self.screen_to_coord(event.pos[0], event.pos[1])
+        pos_x, pos_y = event.pos
+        
+        x, y = self.screen_to_coord(pos_x, pos_y)
         colour = self.board.player
                     
         new_event = pygame.event.wait()
@@ -252,8 +254,8 @@ class BoardUI():
 
         radius, offset = self.radius + 1, self.offset
 
-        for i in range(self.board.top, self.board.bot):
-            for j in range(self.board.left, self.board.right):
+        for i in range(0, self.board.height()):
+            for j in range(0, self.board.width()):
 
                 virtual_cell = Cell()
                 v_y, v_x = self.coord_to_screen(i, j)

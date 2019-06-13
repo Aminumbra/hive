@@ -53,17 +53,49 @@ class Board():
         self.player    = 0
 
         # Some rules need to know which Queens are already on the board
-        self.white_queen = False
-        self.black_queen = False
+        self.queens = [False, False]
 
+        # Remaining pieces for both players
+        self.remaining_pieces = [Pieces.starting_pieces.copy(), Pieces.starting_pieces.copy()]
+
+    ##############################################################
+
+    def width(self):
+        return self.__width
+
+    def height(self):
+        return self.__height
 
     ##############################################################
 
     ## Useful functions
 
+    def first_move(self):
+        """
+        Returns True if the board is empty, i.e. if no move has
+        been played so far.
+        Returns False otherwise.
+        """
+        return (self.movecount == 1 and self.player ==0)
+
+
+    def set_bounds(self, i, j):
+        """
+        This function should be called only once, when the
+        first piece is placed on the board.
+        It sets the board's bounds to this position.
+        """
+
+        self.top   = i
+        self.bot   = i+1
+        self.left  = j
+        self.right = j+1
+    
+
     def all_pieces_on(self, i, j):
         return self.board[i][j] 
 
+    
     def piece_on(self, i, j):
 
         P = self.all_pieces_on(i, j)
@@ -72,7 +104,42 @@ class Board():
             return P[-1]
         else:
             return None
-            
+
+
+    def add_piece(self, i, j, p):
+        """
+        Adds the piece p to the cell (i, j).
+        Does not check for anything, such as whether it is
+        legal or not place such a piece at such a cell.
+        Updates self.[top|bot|left|right].
+        Updates self.remaining_pieces.
+        """
+
+        self.board[i][j].append(p)
+
+        self.remaining_pieces[p.colour][p.symbol] -= 1
+
+        self.top   = min(self.top,   i)
+        self.bot   = max(self.bot,   i+1)
+        self.left  = min(self.left,  j)
+        self.right = max(self.right, j+1)
+
+
+    def remove_piece(self, i, j):
+        """
+        Removes a piece from the cell (i, j).
+        Does not perform any legality check.
+        Does not update self.[top|bot|left|right].
+        Returns the piece that was removed. If not piece was
+        on this cell, return None
+        """
+
+        if self.piece_on(i, j):
+            return self.board[i][j].pop()
+        else:
+            return None
+        
+        
     
     def cells_of_colour(self, colour):
         """
@@ -100,8 +167,8 @@ class Board():
         
         cells = set()
 
-        for i in range(self.top, self.bot):
-            for j in range(self.left, self.right):
+        for i in range(0, self.height()):
+            for j in range(0, self.width()):
 
                 p = self.piece_on(i, j)
 
@@ -186,13 +253,8 @@ class Board():
 
     def queen_position(self, colour):
 
-        if colour == 0:
-            if not self.white_queen:
-                return None
-
-        else:
-            if not self.black_queen:
-                return None
+        if not self.queens[colour]:
+            return None
 
         for i in range(self.top, self.bot):
             for j in range(self.left, self.right):
